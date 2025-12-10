@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Get User</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        input { margin-bottom: 1em; }
+        pre { background-color: #f4f4f4; padding: 1em; border: 1px solid #ddd; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Get User Data</h1>
+    <form id="getUserForm">
+        <label for="userId">User ID:</label><br>
+        <input type="text" id="userId" name="userId" value="user123" required><br>
+        <button type="submit">Get User</button>
+    </form>
+
+    <h2>User Data:</h2>
+    <pre id="userData">Data will appear here...</pre>
+
+    <script>
+        document.getElementById('getUserForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the form from submitting the traditional way
+            const userId = document.getElementById('userId').value;
+            const userDataElement = document.getElementById('userData');
+
+            userDataElement.textContent = 'Loading...';
+
+            fetch(`/api/users/${userId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`User not found (Status: ${response.status})`);
+                    }
+                    return response.json(); // The controller returns a JSON string, which fetch can parse
+                })
+                .then(data => {
+                    // Pretty-print the JSON object
+                    userDataElement.textContent = JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    userDataElement.textContent = 'Error: ' + error.message;
+                });
+        });
+    </script>
+</body>
+</html>

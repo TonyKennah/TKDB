@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Save User</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        input, textarea { margin-bottom: 1em; width: 300px; }
+        textarea { height: 100px; }
+        #status { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Save/Update User</h1>
+    <form id="saveUserForm">
+        <label for="userId">User ID:</label><br>
+        <input type="text" id="userId" name="userId" value="user123" required><br>
+
+        <label for="jsonData">User JSON Data:</label><br>
+        <textarea id="jsonData" name="jsonData" required>{"name": "John Doe", "email": "john.doe@example.com", "active": true}</textarea><br>
+
+        <button type="submit">Save User</button>
+    </form>
+
+    <p id="status"></p>
+
+    <script>
+        document.getElementById('saveUserForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const userId = document.getElementById('userId').value;
+            const jsonData = document.getElementById('jsonData').value;
+            const statusElement = document.getElementById('status');
+
+            fetch(`/api/users/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: jsonData // The body is already a JSON string from the textarea
+            })
+            .then(response => {
+                statusElement.textContent = `User '${userId}' saved successfully! (Status: ${response.status})`;
+            })
+            .catch(error => {
+                statusElement.textContent = 'Error: ' + error.message;
+            });
+        });
+    </script>
+</body>
+</html>

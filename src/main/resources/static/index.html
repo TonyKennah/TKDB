@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TKDB Home</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        button { padding: 0.5em 1em; font-size: 1em; margin-bottom: 1em; cursor: pointer; }
+        pre { background-color: #f4f4f4; padding: 1em; border: 1px solid #ddd; white-space: pre-wrap; }
+        #dbStatus { font-weight: bold; min-height: 1.2em; }
+        h3 { margin-top: 1.5em; }
+    </style>
+</head>
+<body>
+    <h1>User Management</h1>
+    <p>
+        <a href="/save_user.html">Save a User</a> | <a href="/get_user.html">Get a Specific User</a>
+    </p>
+
+    <hr>
+
+    <h2>All Users</h2>
+    <div>
+        <button id="listUsersBtn">List All Users</button>
+        <button id="saveToDiskBtn" style="background-color: #e7f7e7;">Save All Data to Disk</button>
+        <button id="loadFromDiskBtn" style="background-color: #e7e7f7;">Read All Data from Disk</button>
+    </div>
+    <p id="dbStatus"></p>
+
+    <div id="userList"></div>
+
+    <script>
+        function fetchAndDisplayUsers() {
+            const userListElement = document.getElementById('userList');
+            userListElement.innerHTML = '<p>Loading...</p>';
+
+            fetch('/api/users')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Error fetching users (Status: ${response.status})`);
+                    }
+                    return response.json();
+                })
+                .then(users => {
+                    userListElement.innerHTML = ''; // Clear loading message
+                    if (Object.keys(users).length === 0) {
+                        userListElement.innerHTML = '<p>No users found in the database.</p>';
+                        return;
+                    }
+
+                    for (const userId in users) {
+                        const userJson = JSON.stringify(JSON.parse(users[userId]), null, 2);
+                        userListElement.innerHTML += `<h3>User ID: ${userId}</h3><pre>${userJson}</pre>`;
+                    }
+                })
+                .catch(error => {
+                    userListElement.innerHTML = `<p style="color: red;">${error.message}</p>`;
+                });
+        }
+
+        document.getElementById('listUsersBtn').addEventListener('click', fetchAndDisplayUsers);
+
+        document.getElementById('saveToDiskBtn').addEventListener('click', function() {
+            const statusElement = document.getElementById('dbStatus');
+            statusElement.textContent = 'Saving to disk...';
+            statusElement.style.color = 'inherit';
+
+            fetch('/api/users/admin/save', {
+                method: 'POST'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to save (Status: ${response.status})`);
+                }
+                statusElement.textContent = 'Database saved to disk successfully!';
+                statusElement.style.color = 'green';
+            })
+            .catch(error => {
+                statusElement.textContent = `Error: ${error.message}`;
+                statusElement.style.color = 'red';
+            });
+        });
+
+        document.getElementById('loadFromDiskBtn').addEventListener('click', function() {
+            const statusElement = document.getElementById('dbStatus');
+            statusElement.textContent = 'Loading from disk...';
+            statusElement.style.color = 'inherit';
+
+            fetch('/api/users/admin/load', {
+                method: 'POST'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to load (Status: ${response.status})`);
+                }
+                statusElement.textContent = 'Database loaded from disk successfully! Refreshing user list...';
+                statusElement.style.color = 'blue';
+
+                // Automatically refresh the user list to show the newly loaded data
+                fetchAndDisplayUsers();
+            })
+            .catch(error => {
+                statusElement.textContent = `Error: ${error.message}`;
+                statusElement.style.color = 'red';
+            });
+        });
+    </script>
+</body>
+</html>
